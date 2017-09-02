@@ -86,7 +86,8 @@ public class Server {
                                             }
                                             user.password = changePassword.newPassword;
                                     }
-                                } catch (IOException | ClassNotFoundException | IllegalStateException e) {
+                                } catch (IllegalStateException e) {
+                                } catch (IOException | ClassNotFoundException e) {
                                     e.printStackTrace();
                                 } finally {
                                     try {
