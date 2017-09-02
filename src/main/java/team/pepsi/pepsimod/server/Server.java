@@ -149,12 +149,16 @@ public class Server {
                 if (entry == null) {
                     break;
                 }
+                byte[] data;
                 if (entry.getName().endsWith(".class")) {
-                    byte[] clazz = Zlib.deflate(getBytes(jarFile.getInputStream(entry)), 7);
+                    data = Zlib.deflate(getBytes(jarFile.getInputStream(entry)), 7);
                     String className = entry.getName().replace('/', '.');
                     className = className.substring(0, className.length() - ".class".length());
-                    pepsimod.put(className, clazz);
-                    System.out.println("Adding class " + className + ", byte size: " + clazz.length);
+                    pepsimod.put(className, data);
+                    System.out.println("Adding class " + className + ", byte size: " + data.length);
+                } else if (entry.getName().contains("."))   {
+                    assets.put(entry.getName(), data = Zlib.deflate(getBytes(jarFile.getInputStream(entry)), 7));
+                    System.out.println("Adding resource " + entry.getName() + ", byte size: " + data.length);
                 }
             }
         } catch (Exception e) {
@@ -169,6 +173,7 @@ public class Server {
             for (int len; (len = is.read(buffer)) != -1; )
                 os.write(buffer, 0, len);
             os.flush();
+            is.close();
             return os.toByteArray();
         } catch (IOException e) {
             e.printStackTrace();
