@@ -138,6 +138,9 @@ public class Server {
                 case "save":
                     tag.save();
                     break;
+                case "help":
+                    System.out.println("add remove resethwid save");
+                    break;
             }
         }
     }
