@@ -1,6 +1,7 @@
 package team.pepsi.pepsimod.server;
 
 import team.pepsi.pepsimod.common.*;
+import team.pepsi.pepsimod.common.util.Zlib;
 
 import java.io.*;
 import java.net.ServerSocket;
@@ -13,7 +14,7 @@ public class Server {
     public static HashMap<String, byte[]> pepsimod = new HashMap<>();
     public static HashMap<String, byte[]> assets = new HashMap<>();
     public static Timer timer = new Timer();
-    public static DataTag tag = new DataTag(new File(DataTag.HOME_FOLDER.getPath() + DataTag.HOME_FOLDER.separatorChar + ".pepsimodaccounts.dat"));
+    public static DataTag tag = new DataTag(new File(DataTag.HOME_FOLDER.getPath() + File.separatorChar + ".pepsimodaccounts.dat"));
 
     public static void main(String[] args) {
         populateArray(args[0]); //path to pepsimod jar
