@@ -13,4 +13,19 @@
         <maven.compiler.target>1.8</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
+
+    <repositories>
+        <repository>
+            <id>jitpack.io</id>
+            <url>https://jitpack.io</url>
+        </repository>
+    </repositories>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.github.Team-Pepsi</groupId>
+            <artifactId>pepsimod-common</artifactId>
+            <version>37dba3f4a0</version>
+        </dependency>
+    </dependencies>
 </project>
