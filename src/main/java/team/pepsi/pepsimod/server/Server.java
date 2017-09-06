@@ -1,5 +1,23 @@
+/*
+ * Adapted from the Wizardry License
+ *
+ * Copyright (c) 2017 Team Pepsi
+ *
+ * Permission is hereby granted to any persons and/or organizations using this software to copy, modify, merge, publish, and distribute it.
+ * Said persons and/or organizations are not allowed to use the software or any derivatives of the work for commercial use or any other means to generate income, nor are they allowed to claim this software as their own.
+ *
+ * The persons and/or organizations are also disallowed from sub-licensing and/or trademarking this software without explicit permission from Team Pepsi.
+ *
+ * Any persons and/or organizations using this software must disclose their source code and have it publicly available, include this license, provide sufficient credit to the original authors of the project (IE: Team Pepsi), as well as provide a link to the original project.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
 package team.pepsi.pepsimod.server;
 
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import team.pepsi.pepsimod.common.util.Zlib;
 
 import java.io.*;
@@ -10,6 +28,7 @@ import java.net.Socket;
 import java.security.Permission;
 import java.security.PermissionCollection;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
@@ -18,9 +37,20 @@ public class Server {
     public static HashMap<String, byte[]> assets = new HashMap<>();
     public static Timer timer = new Timer();
     public static DataTag tag = new DataTag(new File(DataTag.HOME_FOLDER.getPath() + File.separatorChar + ".pepsimodaccounts.dat"));
+    public static ArrayList<String> bannedIPs;
+    public static LoadingCache<String, Integer> ipConnectionCount = CacheBuilder.newBuilder()
+            .concurrencyLevel(4)
+            .maximumSize(10000)
+            .expireAfterWrite(5, TimeUnit.MINUTES)
+            .build(new CacheLoader<String, Integer>() {
+                        public Integer load(String key) {
+                            return 0;
+                        }
+                    });
 
-    static {
+    static { //TODO: ip blocking
         removeCryptographyRestrictions();
+        bannedIPs = (ArrayList<String>) tag.getSerializable("super_secret_ip_bans_for_pepsimod", new ArrayList<String>());
     }
 
     public static void main(String[] args) {
@@ -69,7 +99,27 @@ public class Server {
                     tag.save();
                     break;
                 case "help":
-                    System.out.println("add remove resethwid save");
+                    System.out.println("add remove resethwid save pwd ban unban banlist");
+                    break;
+                case "pwd":
+                    User usr = (User) tag.getSerializable(split[1]);
+                    if (usr == null)    {
+                        System.out.println("No such user!");
+                    } else {
+                        System.out.println(usr.password);
+                    }
+                    break;
+                case "ban":
+                    bannedIPs.add(split[1]);
+                    break;
+                case "banlist":
+                    for (String s : bannedIPs)  {
+                        System.out.print(s + " ");
+                    }
+                    System.out.println();
+                    break;
+                case "unban":
+                    bannedIPs.remove(split[1]);
                     break;
             }
         }
