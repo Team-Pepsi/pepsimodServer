@@ -18,6 +18,7 @@ clear
 # mvn clean compile
 
 while [ "$DO_LOOP" == "true" ]; do
-	mvn exec:java -Dexec.args="E:\PortableIDE\pepsimod\build\libs\pepsimod-11.1-fullaaa.jar" -Dexec.mainClass="team.pepsi.pepsimod.server.Server" -Dexec.classpathScope=runtime
-	echo "Press Ctrl+c to stop" 
+	mvn exec:java -Dexec.args="/var/lib/jenkins/workspace/pepsimod/build/libs/pepsimod-11.1-full.jar" -Dexec.mainClass="team.pepsi.pepsimod.server.Server" -Dexec.classpathScope=runtime
+	echo "Press Ctrl+c to stop"
+	sleep 2
 done
