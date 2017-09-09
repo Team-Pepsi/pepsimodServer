@@ -108,6 +108,7 @@ public class ClientThread extends Thread {
                         throw new WrongClassException();
                     }
                     user.password = changePassword.newPassword;
+                    tag.save();
                     out.writeObject(new ClientboundMessage(false, SerializableUtils.toBytes(new ServerNotification("Password change successful!", NOTIFICATION_SUCCESS))));
                     break;
             }
