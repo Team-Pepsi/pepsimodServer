@@ -48,6 +48,7 @@ public class Server {
                         }
                     });
     public static int protocol = 1;
+    public static ServerSocket socket;
 
     static { //TODO: ip blocking
         removeCryptographyRestrictions();
@@ -59,7 +60,7 @@ public class Server {
         new Thread() {
             public void run() {
                 try {
-                    ServerSocket socket = new ServerSocket(48273);
+                    socket = new ServerSocket(48273);
                     while (true) {
                         System.out.println("[Main thread] Waiting for client...");
                         final Socket clientSocket = socket.accept();
@@ -121,6 +122,14 @@ public class Server {
                     break;
                 case "unban":
                     bannedIPs.remove(split[1]);
+                    break;
+                case "stop":
+                    try {
+                        socket.close();
+                    } catch (IOException e) {
+                        //wtf java
+                    }
+                    System.exit(32);
                     break;
             }
         }
