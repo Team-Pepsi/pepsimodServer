@@ -18,10 +18,7 @@ package team.pepsi.pepsimod.server;
 import team.pepsi.pepsimod.common.*;
 import team.pepsi.pepsimod.common.message.ClientboundMessage;
 import team.pepsi.pepsimod.common.util.SerializableUtils;
-import team.pepsi.pepsimod.server.exception.InvalidHWIDException;
-import team.pepsi.pepsimod.server.exception.NoSuchUserException;
-import team.pepsi.pepsimod.server.exception.UserBannedException;
-import team.pepsi.pepsimod.server.exception.WrongClassException;
+import team.pepsi.pepsimod.server.exception.*;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -35,6 +32,7 @@ public class ClientThread extends Thread {
             ERROR_BANNED = 0,
             ERROR_HWID = 1,
             ERROR_WRONGCLASS = 2,
+            ERROR_UPDATE = 3,
             NOTIFICATION_SUCCESS = -1,
             NOTIFICATION_USER = 1,
             NOTIFICATION_IGNORE = -2,
@@ -70,6 +68,9 @@ public class ClientThread extends Thread {
                 throw new WrongClassException();
             }
             System.out.println(info.username + " " + info.hwid);
+            if (info.protocol != Server.protocol)   {
+
+            }
             User user = (User) tag.getSerializable(info.username);
             if (user == null) {
                 System.out.println("Invalid user: " + info.username);
@@ -134,6 +135,13 @@ public class ClientThread extends Thread {
         } catch (WrongClassException | ClassNotFoundException e) {
             try {
                 out.writeObject(new ClientboundMessage(false, SerializableUtils.toBytes(new ServerLoginErrorMessage("Invalid class sent!", ERROR_WRONGCLASS))));
+                out.flush();
+            } catch (IOException e1) {
+                e.printStackTrace();
+            }
+        } catch (UpdateException e) {
+            try {
+                out.writeObject(new ClientboundMessage(false, SerializableUtils.toBytes(new ServerLoginErrorMessage("Outdated launcher version! Download the latest launcher and try again!", ERROR_UPDATE))));
                 out.flush();
             } catch (IOException e1) {
                 e.printStackTrace();

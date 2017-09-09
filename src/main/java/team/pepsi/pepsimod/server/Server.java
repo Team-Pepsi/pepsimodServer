@@ -47,6 +47,7 @@ public class Server {
                             return 0;
                         }
                     });
+    public static int protocol = 1;
 
     static { //TODO: ip blocking
         removeCryptographyRestrictions();
