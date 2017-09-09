@@ -15,10 +15,13 @@
 
 package team.pepsi.pepsimod.server;
 
-import team.pepsi.pepsimod.common.ClientAuthInfo;
-import team.pepsi.pepsimod.common.ClientChangePassword;
-import team.pepsi.pepsimod.common.ServerLoginErrorMessage;
-import team.pepsi.pepsimod.common.ServerPepsiModSending;
+import team.pepsi.pepsimod.common.*;
+import team.pepsi.pepsimod.common.message.ClientboundMessage;
+import team.pepsi.pepsimod.common.util.SerializableUtils;
+import team.pepsi.pepsimod.server.exception.InvalidHWIDException;
+import team.pepsi.pepsimod.server.exception.NoSuchUserException;
+import team.pepsi.pepsimod.server.exception.UserBannedException;
+import team.pepsi.pepsimod.server.exception.WrongClassException;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -28,10 +31,19 @@ import java.net.Socket;
 import static team.pepsi.pepsimod.server.Server.*;
 
 public class ClientThread extends Thread {
+    public static final int
+            ERROR_BANNED = 0,
+            ERROR_HWID = 1,
+            ERROR_WRONGCLASS = 2,
+            NOTIFICATION_SUCCESS = -1,
+            NOTIFICATION_USER = 1,
+            NOTIFICATION_IGNORE = -2;
     Socket clientSocket;
+    String ip;
 
     public ClientThread(Socket socket) {
         this.clientSocket = socket;
+        ip = clientSocket.getRemoteSocketAddress().toString().split(":")[0];
     }
 
     @Override
@@ -40,7 +52,13 @@ public class ClientThread extends Thread {
         ObjectInputStream in = null;
         try {
             out = new ObjectOutputStream(clientSocket.getOutputStream());
+            if (Server.bannedIPs.contains(ip)) {
+                throw new UserBannedException();
+            }
+
             in = new ObjectInputStream(clientSocket.getInputStream());
+            out.writeObject(new ClientboundMessage(false, SerializableUtils.toBytes(new ServerNotification(null, NOTIFICATION_IGNORE))));
+            out.flush();
             Object obj = in.readObject();
             ClientAuthInfo info;
             if (obj instanceof ClientAuthInfo) {
@@ -48,15 +66,14 @@ public class ClientThread extends Thread {
             } else {
                 System.out.println("OBJ WAS NOT INSTANCE OF CLIENTAUTHINFO!");
                 System.out.println(obj.getClass().getCanonicalName());
-                throw new ClassNotFoundException("Excpected ClientAuthInfo");
+                throw new WrongClassException();
             }
             System.out.println(info.username + " " + info.hwid);
             User user = (User) tag.getSerializable(info.username);
             if (user == null) {
-                out.writeObject(new ServerLoginErrorMessage("Invalid credentials!"));
                 System.out.println("Invalid user: " + info.username);
                 incrementBlackList();
-                throw new IllegalStateException("No such user!");
+                throw new NoSuchUserException();
             } else {
                 if (user.isValidHWID(info.hwid)) {
                     //user verified!
@@ -65,12 +82,11 @@ public class ClientThread extends Thread {
                         user.addHWID(info.hwid);
                     }
                 } else {
-                    out.writeObject(new ServerLoginErrorMessage("Invalid HWID! Ask DaPorkchop_ for a reset."));
-                    out.flush();
                     incrementBlackList();
-                    throw new IllegalStateException("Invalid HWID");
+                    throw new InvalidHWIDException();
                 }
             }
+
             switch (info.nextRequest) {
                 case 0: //play
                     System.out.println("Sending...");
@@ -78,7 +94,7 @@ public class ClientThread extends Thread {
                     out.flush();
                     break;
                 case 1: //change password
-                    out.writeObject(new ServerLoginErrorMessage("notAnError"));
+                    out.writeObject(new ClientboundMessage(false, SerializableUtils.toBytes(new ServerNotification(null, NOTIFICATION_IGNORE))));
                     out.flush();
                     ClientChangePassword changePassword;
                     obj = in.readObject();
@@ -87,13 +103,41 @@ public class ClientThread extends Thread {
                     } else {
                         System.out.println("OBJ WAS NOT INSTANCE OF CLIENTCHANGEPASSWORD!");
                         System.out.println(obj.getClass().getCanonicalName());
-                        throw new ClassNotFoundException("Excpected ClientChangePassword");
+                        throw new WrongClassException();
                     }
                     user.password = changePassword.newPassword;
+                    out.writeObject(new ClientboundMessage(false, SerializableUtils.toBytes(new ServerNotification("Password change successful!", NOTIFICATION_SUCCESS))));
                     break;
             }
-        } catch (IllegalStateException e) {
-        } catch (IOException | ClassNotFoundException e) {
+        } catch (UserBannedException e) {
+            try {
+                out.writeObject(new ClientboundMessage(false, SerializableUtils.toBytes(new ServerLoginErrorMessage("Banned IP!", ERROR_BANNED))));
+                out.flush();
+            } catch (IOException e1) {
+                e.printStackTrace();
+            }
+        } catch (InvalidHWIDException e) {
+            try {
+                out.writeObject(new ClientboundMessage(false, SerializableUtils.toBytes(new ServerLoginErrorMessage("Invalid HWID! Ask DaPorkchop_ for a reset!", ERROR_HWID))));
+                out.flush();
+            } catch (IOException e1) {
+                e.printStackTrace();
+            }
+        } catch (NoSuchUserException e) {
+            try {
+                out.writeObject(new ClientboundMessage(false, SerializableUtils.toBytes(new ServerNotification("No such user!", NOTIFICATION_USER))));
+                out.flush();
+            } catch (IOException e1) {
+                e.printStackTrace();
+            }
+        } catch (WrongClassException | ClassNotFoundException e) {
+            try {
+                out.writeObject(new ClientboundMessage(false, SerializableUtils.toBytes(new ServerLoginErrorMessage("Invalid class sent!", ERROR_WRONGCLASS))));
+                out.flush();
+            } catch (IOException e1) {
+                e.printStackTrace();
+            }
+        } catch (IOException e) {
             e.printStackTrace();
         } finally {
             try {
@@ -110,18 +154,23 @@ public class ClientThread extends Thread {
         }
     }
 
-    public void incrementBlackList()    {
-        String ip = clientSocket.getRemoteSocketAddress().toString().split(":")[0];
-        if (Server.bannedIPs.contains(ip))    {
-            throw new IllegalStateException("Banned IP!");
-        }
-
+    public void incrementBlackList() {
         int currentLogInCount = Server.ipConnectionCount.getUnchecked(ip) + 1;
         Server.ipConnectionCount.put(ip, currentLogInCount);
         if (currentLogInCount > 15) { //permabeaned
             Server.bannedIPs.add(ip);
             System.out.println("Automatically banned address: " + ip);
-            throw new IllegalStateException("Banned IP!");
+            throw new UserBannedException();
+        }
+    }
+
+    public void resetBlacklist() {
+        int currentLogInCount = Server.ipConnectionCount.getUnchecked(ip) + 1;
+        Server.ipConnectionCount.put(ip, currentLogInCount);
+        if (currentLogInCount > 15) { //permabeaned
+            Server.bannedIPs.add(ip);
+            System.out.println("Automatically banned address: " + ip);
+            throw new UserBannedException();
         }
     }
 }
