@@ -37,7 +37,8 @@ public class ClientThread extends Thread {
             ERROR_WRONGCLASS = 2,
             NOTIFICATION_SUCCESS = -1,
             NOTIFICATION_USER = 1,
-            NOTIFICATION_IGNORE = -2;
+            NOTIFICATION_IGNORE = -2,
+            NOTIFICATION_SENDPASS = 0;
     Socket clientSocket;
     String ip;
 
@@ -94,7 +95,7 @@ public class ClientThread extends Thread {
                     out.flush();
                     break;
                 case 1: //change password
-                    out.writeObject(new ClientboundMessage(false, SerializableUtils.toBytes(new ServerNotification(null, NOTIFICATION_IGNORE))));
+                    out.writeObject(new ClientboundMessage(false, SerializableUtils.toBytes(new ServerNotification(null, NOTIFICATION_SENDPASS))));
                     out.flush();
                     ClientChangePassword changePassword;
                     obj = in.readObject();
