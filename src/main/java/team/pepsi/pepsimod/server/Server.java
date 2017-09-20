@@ -164,6 +164,8 @@ public class Server {
 
             File[] files = dir.listFiles();
             System.out.println("loading " + files.length + " versions...");
+            version_to_pepsimod.clear();
+            version_to_assets.clear();
             for (File file : files) {
                 System.out.println("Loading " + file.getName() + " (for MC v" + (FilenameUtils.removeExtension(file.getName()).replace("pepsimod-", "")) + ")");
                 HashMap<String, byte[]> classes = new HashMap<>(), assets = new HashMap<>();

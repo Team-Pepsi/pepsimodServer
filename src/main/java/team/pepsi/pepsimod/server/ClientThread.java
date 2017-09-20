@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.util.HashMap;
 
 public class ClientThread extends Thread {
     public static final int
@@ -90,7 +91,11 @@ public class ClientThread extends Thread {
             switch (info.nextRequest) {
                 case 0: //play
                     System.out.println("Sending...");
-                    out.writeObject(new ServerPepsiModSending(Server.version_to_pepsimod.get(info.version), Server.version_to_assets.get(info.version), user.password));
+                    HashMap<String, byte[]> classes = Server.version_to_pepsimod.get(info.version), assets = Server.version_to_assets.get(info.version);
+                    if (classes == null || assets == null) {
+                        throw new InvalidVersionException();
+                    }
+                    out.writeObject(new ServerPepsiModSending(classes, assets, user.password));
                     out.flush();
                     break;
                 case 1: //change password
@@ -141,6 +146,13 @@ public class ClientThread extends Thread {
         } catch (UpdateException e) {
             try {
                 out.writeObject(new ClientboundMessage(false, SerializableUtils.toBytes(new ServerLoginErrorMessage("Outdated launcher version! Download the latest launcher and try again!", ERROR_UPDATE))));
+                out.flush();
+            } catch (IOException e1) {
+                e.printStackTrace();
+            }
+        } catch (InvalidVersionException e) {
+            try {
+                out.writeObject(new ClientboundMessage(false, SerializableUtils.toBytes(new ServerLoginErrorMessage("Unsupported Minecraft version! Please refer to the discord for a list of supported versions.", ERROR_UPDATE))));
                 out.flush();
             } catch (IOException e1) {
                 e.printStackTrace();
