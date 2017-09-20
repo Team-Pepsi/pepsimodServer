@@ -89,18 +89,7 @@ public class Server {
             tag.save();
         }, 60 * 60 * 1000);
         schedule(() -> {
-            File f = new File("/var/lib/jenkins/updatepepsimod.txt");
-            if (f.exists()) {
-                if (f.delete()) {
-                    System.out.println("Deleted file");
-                    populateArray("/pepsimodjars");
-                    webhook.send();
-                } else {
-                    System.out.println("Didn't delete file");
-                }
-            } else {
-                System.out.println("File doesn't exist");
-            }
+            checkForUpdates();
         }, 5 * 60 * 1000);
         Scanner scanner = new Scanner(System.in);
         while (true) {
@@ -123,7 +112,7 @@ public class Server {
                     tag.save();
                     break;
                 case "help":
-                    System.out.println("add remove resethwid save pwd ban unban banlist");
+                    System.out.println("add remove resethwid save pwd ban unban banlist stop checkupdates");
                     break;
                 case "pwd":
                     User usr = (User) tag.getSerializable(split[1]);
@@ -153,6 +142,13 @@ public class Server {
                     }
                     System.exit(32);
                     break;
+                case "checkupdates":
+                    if (checkForUpdates()) {
+                        System.out.println("Success!");
+                    } else {
+                        System.out.println("didn't work xd");
+                    }
+                    break;
             }
         }
     }
@@ -161,7 +157,10 @@ public class Server {
         try {
             File dir = new File(jarsPath);
 
-            for (File file : dir.listFiles()) {
+            File[] files = dir.listFiles();
+            System.out.println("loading " + files.length + " versions...");
+            for (File file : files) {
+                System.out.println("Loading " + file.getName() + " (for MC v" + (FilenameUtils.removeExtension(file.getName()).replace("pepsimod-", "")) + ")");
                 HashMap<String, byte[]> classes = new HashMap<>(), assets = new HashMap<>();
                 JarFile jarFile = new JarFile(new File(file.getName()));
 
@@ -265,5 +264,22 @@ public class Server {
         final String ver = System.getProperty("java.version");
         return name != null && name.equals("Java(TM) SE Runtime Environment")
                 && ver != null && (ver.startsWith("1.7") || ver.startsWith("1.8"));
+    }
+
+    public static boolean checkForUpdates() {
+        File f = new File("/var/lib/jenkins/updatepepsimod.txt");
+        if (f.exists()) {
+            if (f.delete()) {
+                System.out.println("Deleted file");
+                populateArray("/pepsimodjars");
+                webhook.send();
+                return true;
+            } else {
+                System.out.println("Didn't delete file");
+            }
+        } else {
+            System.out.println("File doesn't exist");
+        }
+        return false;
     }
 }
