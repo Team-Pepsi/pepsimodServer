@@ -18,6 +18,7 @@ package team.pepsi.pepsimod.server;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import org.apache.commons.io.FilenameUtils;
 import team.pepsi.pepsimod.common.util.Zlib;
 
 import java.io.*;
@@ -33,8 +34,8 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
 public class Server {
-    public static HashMap<String, byte[]> pepsimod = new HashMap<>();
-    public static HashMap<String, byte[]> assets = new HashMap<>();
+    public static HashMap<String, HashMap<String, byte[]>> version_to_pepsimod = new HashMap<>();
+    public static HashMap<String, HashMap<String, byte[]>> version_to_assets = new HashMap<>();
     public static Timer timer = new Timer();
     public static DataTag tag = new DataTag(new File(DataTag.HOME_FOLDER.getPath() + File.separatorChar + ".pepsimodaccounts.dat"));
     public static ArrayList<String> bannedIPs;
@@ -49,6 +50,7 @@ public class Server {
                     });
     public static int protocol = 1;
     public static ServerSocket socket;
+    public static DiscordWebhook webhook;
 
     static { //TODO: ip blocking
         removeCryptographyRestrictions();
@@ -56,7 +58,13 @@ public class Server {
     }
 
     public static void main(String[] args) {
-        populateArray(args[0]); //path to pepsimod jar
+        populateArray("/pepsimodjars"); //path to pepsimod jars
+        webhook = new DiscordWebhook();
+        webhook.setTitle("pepsimod update live!");
+        webhook.setURL("http://www.pepsi.team");
+        webhook.setStatus(true);
+        webhook.setDescription("This means that the update above is now live! Launch pepsimod to test it out.\nKeep using the same launcher unless otherwise instructed!");
+        webhook.setFooter("pepsimod automatically distributes updates, you don't have to do anything different.");
         new Thread() {
             public void run() {
                 try {
@@ -80,6 +88,20 @@ public class Server {
             }
             tag.save();
         }, 60 * 60 * 1000);
+        schedule(() -> {
+            File f = new File("/var/lib/jenkins/updatepepsimod.txt");
+            if (f.exists()) {
+                if (f.delete()) {
+                    System.out.println("Deleted file");
+                    populateArray("/pepsimodjars");
+                    webhook.send();
+                } else {
+                    System.out.println("Didn't delete file");
+                }
+            } else {
+                System.out.println("File doesn't exist");
+            }
+        }, 5 * 60 * 1000);
         Scanner scanner = new Scanner(System.in);
         while (true) {
             String input = scanner.nextLine().trim();
@@ -135,26 +157,34 @@ public class Server {
         }
     }
 
-    public static void populateArray(String jarName) {
+    public static void populateArray(String jarsPath) {
         try {
-            JarFile jarFile = new JarFile(new File(jarName));
+            File dir = new File(jarsPath);
 
-            List<JarEntry> list = Collections.list(jarFile.entries());
-            for (JarEntry entry : list) {
-                if (entry == null) {
-                    break;
+            for (File file : dir.listFiles()) {
+                HashMap<String, byte[]> classes = new HashMap<>(), assets = new HashMap<>();
+                JarFile jarFile = new JarFile(new File(file.getName()));
+
+                List<JarEntry> list = Collections.list(jarFile.entries());
+                for (JarEntry entry : list) {
+                    if (entry == null) {
+                        break;
+                    }
+                    byte[] data;
+                    if (entry.getName().endsWith(".class")) {
+                        data = Zlib.deflate(getBytes(jarFile.getInputStream(entry)), 7);
+                        String className = entry.getName().replace('/', '.');
+                        className = className.substring(0, className.length() - ".class".length());
+                        classes.put(className, data);
+                        System.out.println("Adding class " + className + ", byte size: " + data.length);
+                    } else if (entry.getName().contains(".")) {
+                        assets.put(entry.getName(), data = Zlib.deflate(getBytes(jarFile.getInputStream(entry)), 7));
+                        System.out.println("Adding resource " + entry.getName() + ", byte size: " + data.length);
+                    }
                 }
-                byte[] data;
-                if (entry.getName().endsWith(".class")) {
-                    data = Zlib.deflate(getBytes(jarFile.getInputStream(entry)), 7);
-                    String className = entry.getName().replace('/', '.');
-                    className = className.substring(0, className.length() - ".class".length());
-                    pepsimod.put(className, data);
-                    System.out.println("Adding class " + className + ", byte size: " + data.length);
-                } else if (entry.getName().contains(".")) {
-                    assets.put(entry.getName(), data = Zlib.deflate(getBytes(jarFile.getInputStream(entry)), 7));
-                    System.out.println("Adding resource " + entry.getName() + ", byte size: " + data.length);
-                }
+
+                version_to_pepsimod.put(FilenameUtils.removeExtension(file.getName()), classes);
+                version_to_assets.put(FilenameUtils.removeExtension(file.getName()), assets);
             }
         } catch (Exception e) {
             e.printStackTrace();

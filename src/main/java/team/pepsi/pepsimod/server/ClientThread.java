@@ -25,8 +25,6 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 
-import static team.pepsi.pepsimod.server.Server.*;
-
 public class ClientThread extends Thread {
     public static final int
             ERROR_BANNED = 0,
@@ -71,7 +69,7 @@ public class ClientThread extends Thread {
             if (info.protocol != Server.protocol)   {
 
             }
-            User user = (User) tag.getSerializable(info.username);
+            User user = (User) Server.tag.getSerializable(info.username);
             if (user == null) {
                 System.out.println("Invalid user: " + info.username);
                 incrementBlackList();
@@ -92,7 +90,7 @@ public class ClientThread extends Thread {
             switch (info.nextRequest) {
                 case 0: //play
                     System.out.println("Sending...");
-                    out.writeObject(new ServerPepsiModSending(pepsimod, assets, user.password));
+                    out.writeObject(new ServerPepsiModSending(Server.version_to_pepsimod.get(info.version), Server.version_to_assets.get(info.version), user.password));
                     out.flush();
                     break;
                 case 1: //change password
@@ -108,7 +106,7 @@ public class ClientThread extends Thread {
                         throw new WrongClassException();
                     }
                     user.password = changePassword.newPassword;
-                    tag.save();
+                    Server.tag.save();
                     out.writeObject(new ClientboundMessage(false, SerializableUtils.toBytes(new ServerNotification("Password change successful!", NOTIFICATION_SUCCESS))));
                     break;
             }
