@@ -162,7 +162,7 @@ public class Server {
             for (File file : files) {
                 System.out.println("Loading " + file.getName() + " (for MC v" + (FilenameUtils.removeExtension(file.getName()).replace("pepsimod-", "")) + ")");
                 HashMap<String, byte[]> classes = new HashMap<>(), assets = new HashMap<>();
-                JarFile jarFile = new JarFile(new File(file.getName()));
+                JarFile jarFile = new JarFile(file);
 
                 List<JarEntry> list = Collections.list(jarFile.entries());
                 for (JarEntry entry : list) {
