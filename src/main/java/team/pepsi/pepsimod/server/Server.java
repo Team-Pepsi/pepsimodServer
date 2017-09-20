@@ -48,7 +48,7 @@ public class Server {
                             return 0;
                         }
                     });
-    public static int protocol = 1;
+    public static int protocol = 2;
     public static ServerSocket socket;
     public static DiscordWebhook webhook;
 
@@ -212,7 +212,7 @@ public class Server {
                 r.run();
             }
         };
-        timer.schedule(task, delay);
+        timer.schedule(task, delay, delay);
         return task;
     }
 
