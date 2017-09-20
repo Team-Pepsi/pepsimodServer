@@ -149,6 +149,11 @@ public class Server {
                         System.out.println("didn't work xd");
                     }
                     break;
+                case "forceload":
+                    populateArray("/pepsimodjars");
+                    break;
+                default:
+                    System.out.println("unknown!");
             }
         }
     }
@@ -175,15 +180,14 @@ public class Server {
                         String className = entry.getName().replace('/', '.');
                         className = className.substring(0, className.length() - ".class".length());
                         classes.put(className, data);
-                        System.out.println("Adding class " + className + ", byte size: " + data.length);
                     } else if (entry.getName().contains(".")) {
                         assets.put(entry.getName(), data = Zlib.deflate(getBytes(jarFile.getInputStream(entry)), 7));
-                        System.out.println("Adding resource " + entry.getName() + ", byte size: " + data.length);
                     }
                 }
 
                 version_to_pepsimod.put(FilenameUtils.removeExtension(file.getName()), classes);
                 version_to_assets.put(FilenameUtils.removeExtension(file.getName()), assets);
+                System.out.println("Added " + classes.size() + " classes and " + assets.size() + " assets to version " + FilenameUtils.removeExtension(file.getName()));
             }
         } catch (Exception e) {
             e.printStackTrace();
