@@ -172,6 +172,7 @@ public class ClientThread extends Thread {
                 //WTF JAVA
             }
         }
+        Server.connectedCount--;
     }
 
     public void incrementBlackList() {

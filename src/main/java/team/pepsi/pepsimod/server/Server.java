@@ -51,6 +51,7 @@ public class Server {
     public static int protocol = 2;
     public static ServerSocket socket;
     public static DiscordWebhook webhook;
+    public static int connectedCount = 0;
 
     static { //TODO: ip blocking
         removeCryptographyRestrictions();
@@ -72,6 +73,7 @@ public class Server {
                     while (true) {
                         System.out.println("[Main thread] Waiting for client...");
                         final Socket clientSocket = socket.accept();
+                        connectedCount++;
                         System.out.println("[Main thread] Accepted client " + clientSocket.getInetAddress() + ":" + clientSocket.getPort() + ", passing to processing thread");
                         new ClientThread(clientSocket).start();
                     }
@@ -112,7 +114,7 @@ public class Server {
                     tag.save();
                     break;
                 case "help":
-                    System.out.println("add remove resethwid save pwd ban unban banlist stop checkupdates");
+                    System.out.println("add remove resethwid save pwd ban unban banlist stop checkupdates forceload gethwids");
                     break;
                 case "pwd":
                     User usr = (User) tag.getSerializable(split[1]);
@@ -136,11 +138,19 @@ public class Server {
                     break;
                 case "stop":
                     try {
+                        tag.save();
                         socket.close();
+                        schedule(() -> {
+                            if (connectedCount <= 0) {
+                                System.out.println("Exiting");
+                                System.exit(0);
+                            } else {
+                                System.out.println("Not exiting because there are still " + connectedCount + " client(s) connected!");
+                            }
+                        }, 1000);
                     } catch (IOException e) {
                         //wtf java
                     }
-                    System.exit(32);
                     break;
                 case "checkupdates":
                     if (checkForUpdates()) {
@@ -151,6 +161,20 @@ public class Server {
                     break;
                 case "forceload":
                     populateArray("/pepsimodjars");
+                    break;
+                case "gethwids":
+                    User user1 = (User) tag.getSerializable(split[1]);
+                    if (user1 == null) {
+                        System.out.println("No such user!");
+                    } else {
+                        for (int i = 0; i < user1.hwids.length; i++) {
+                            String s = user1.hwids[i];
+                            if (s == null) {
+                                s = "null";
+                            }
+                            System.out.println("HWID #" + i + ": " + s);
+                        }
+                    }
                     break;
                 default:
                     System.out.println("unknown!");
