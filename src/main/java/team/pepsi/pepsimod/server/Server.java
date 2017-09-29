@@ -48,7 +48,7 @@ public class Server {
                             return 0;
                         }
                     });
-    public static int protocol = 2;
+    public static int protocol = 3;
     public static ServerSocket socket;
     public static DiscordWebhook webhook;
     public static int connectedCount = 0;

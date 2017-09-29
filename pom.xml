@@ -40,7 +40,7 @@
         <dependency>
             <groupId>com.github.Team-Pepsi</groupId>
             <artifactId>pepsimod-common</artifactId>
-            <version>aaabc7df4962f991c9fcf0985e1006f4c53665e1</version>
+            <version>ff7233b5df31e96ff437242794a43333ad8e0a94</version>
         </dependency>
         <dependency>
             <groupId>com.google.guava</groupId>
