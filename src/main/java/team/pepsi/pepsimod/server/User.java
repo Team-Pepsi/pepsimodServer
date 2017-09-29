@@ -27,6 +27,10 @@ public class User implements Serializable {
             return true;
         }
 
+        return containsHWID(hwid);
+    }
+
+    public boolean containsHWID(String hwid) {
         for (String s : hwids) {
             if (hwid.equals(s)) {
                 return true;
@@ -47,10 +51,12 @@ public class User implements Serializable {
     }
 
     public void addHWID(String hwid) {
-        for (int i = 0; i < hwids.length; i++) {
-            if (hwids[i] == null) {
-                hwids[i] = hwid;
-                return;
+        if (isHWIDSlotFree() && !containsHWID(hwid)) {
+            for (int i = 0; i < hwids.length; i++) {
+                if (hwids[i] == null) {
+                    hwids[i] = hwid;
+                    return;
+                }
             }
         }
     }
