@@ -18,6 +18,7 @@ package team.pepsi.pepsimod.server;
 import java.io.Serializable;
 
 public class User implements Serializable {
+    private static final long serialVersionUID = 380246685237890169L;
     public String username = null;
     public String password = null;
     public String[] hwids = new String[]{null, null};
