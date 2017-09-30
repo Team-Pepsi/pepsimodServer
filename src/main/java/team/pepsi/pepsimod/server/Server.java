@@ -26,6 +26,7 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.handler.timeout.ReadTimeoutHandler;
 import org.apache.commons.io.FilenameUtils;
 import team.pepsi.pepsimod.common.util.Zlib;
 
@@ -90,7 +91,7 @@ public class Server {
                             .childHandler(new ChannelInitializer<SocketChannel>() {
                                 @Override
                                 public void initChannel(SocketChannel ch) throws Exception {
-                                    ch.pipeline().addLast(new PepsiServerHandler());
+                                    ch.pipeline().addLast(new ReadTimeoutHandler(30), new PepsiServerHandler());
                                 }
                             })
                             .option(ChannelOption.SO_BACKLOG, 128)

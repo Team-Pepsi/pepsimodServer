@@ -18,6 +18,7 @@ package team.pepsi.pepsimod.server;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.netty.handler.timeout.ReadTimeoutException;
 import team.pepsi.pepsimod.common.util.CryptUtils;
 import team.pepsi.pepsimod.common.util.SerializableUtils;
 import team.pepsi.pepsimod.common.util.Zlib;
@@ -102,5 +103,13 @@ public class PepsiServerHandler extends ChannelInboundHandlerAdapter {
             e.printStackTrace();
             PepsiPacket.closeSession(ctx, "bad packet", false);
         }
+    }
+
+    @Override
+    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+        if (!(cause instanceof ReadTimeoutException)) {
+            cause.printStackTrace();
+        }
+        ctx.close();
     }
 }
