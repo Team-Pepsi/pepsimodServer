@@ -96,7 +96,7 @@ public class Server {
             }
 
             @Override
-            public void handleMessage(RakNetClientSession session, RakNetPacket packet, int channel) {
+            public void handlePacket(RakNetClientSession session, RakNetPacket packet, int channel) {
                 try {
                     System.out.println("Handling message with ID " + packet.getId());
                     if (bannedIPs.contains(session.getAddress().toString().split(":")[0])) {
