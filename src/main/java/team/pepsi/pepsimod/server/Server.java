@@ -87,7 +87,7 @@ public class Server {
                     ServerBootstrap b = new ServerBootstrap();
                     b.group(group)
                             .channel(NioServerSocketChannel.class)
-                            .handler(new ChannelInitializer<SocketChannel>() {
+                            .childHandler(new ChannelInitializer<SocketChannel>() {
                                 @Override
                                 public void initChannel(SocketChannel ch) throws Exception {
                                     ch.pipeline().addLast(new PepsiServerHandler());
