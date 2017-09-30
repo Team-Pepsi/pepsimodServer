@@ -6,7 +6,7 @@
  * Permission is hereby granted to any persons and/or organizations using this software to copy, modify, merge, publish, and distribute it.
  * Said persons and/or organizations are not allowed to use the software or any derivatives of the work for commercial use or any other means to generate income, nor are they allowed to claim this software as their own.
  *
- * The persons and/or organizations are also disallowed from sub-licensing and/or trademarking this software without explicit permission from Team Pepsi. 
+ * The persons and/or organizations are also disallowed from sub-licensing and/or trademarking this software without explicit permission from Team Pepsi.
  *
  * Any persons and/or organizations using this software must disclose their source code and have it publicly available, include this license, provide sufficient credit to the original authors of the project (IE: Team Pepsi), as well as provide a link to the original project.
  *
@@ -28,18 +28,18 @@ public class PacketDataInput extends InputStream implements DataInput {
     }
 
     public int read() throws IOException {
-        return this.packet.remaining() <= 0 ? -1 : this.packet.readUnsignedByte();
+        return this.packet.remaining() <= 0?-1:this.packet.readUnsignedByte();
     }
 
     public void readFully(byte[] b) throws IOException {
-        for (int i = 0; i < b.length; ++i) {
+        for(int i = 0; i < b.length; ++i) {
             b[i] = this.packet.readByte();
         }
 
     }
 
     public void readFully(byte[] b, int off, int len) throws IOException {
-        for (int i = off; i < len; ++i) {
+        for(int i = off; i < len; ++i) {
             b[i] = this.packet.readByte();
         }
 
@@ -47,7 +47,7 @@ public class PacketDataInput extends InputStream implements DataInput {
 
     public int skipBytes(int n) throws IOException {
         int skipped;
-        for (skipped = 0; skipped < n && this.packet.remaining() > 0; ++skipped) {
+        for(skipped = 0; skipped < n && this.packet.remaining() > 0; ++skipped) {
             this.packet.readByte();
         }
 
@@ -75,7 +75,7 @@ public class PacketDataInput extends InputStream implements DataInput {
     }
 
     public char readChar() throws IOException {
-        return (char) this.packet.readUnsignedShort();
+        return (char)this.packet.readUnsignedShort();
     }
 
     public int readInt() throws IOException {

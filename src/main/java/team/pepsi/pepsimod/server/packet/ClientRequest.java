@@ -21,6 +21,7 @@ public class ClientRequest extends Packet {
     public String username;
     public String hwid;
     public String version;
+    public String password;
     public int protocol;
     public int nextRequest;
 
@@ -37,6 +38,7 @@ public class ClientRequest extends Packet {
         this.writeString(username);
         this.writeString(hwid);
         this.writeString(version);
+        this.writeString(password);
         this.writeInt(protocol);
         this.writeInt(nextRequest);
     }
@@ -46,6 +48,7 @@ public class ClientRequest extends Packet {
         username = readString();
         hwid = readString();
         version = readString();
+        password = readString();
         protocol = readInt();
         nextRequest = readInt();
     }

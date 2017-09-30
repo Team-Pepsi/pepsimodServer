@@ -6,7 +6,7 @@
  * Permission is hereby granted to any persons and/or organizations using this software to copy, modify, merge, publish, and distribute it.
  * Said persons and/or organizations are not allowed to use the software or any derivatives of the work for commercial use or any other means to generate income, nor are they allowed to claim this software as their own.
  *
- * The persons and/or organizations are also disallowed from sub-licensing and/or trademarking this software without explicit permission from Team Pepsi. 
+ * The persons and/or organizations are also disallowed from sub-licensing and/or trademarking this software without explicit permission from Team Pepsi.
  *
  * Any persons and/or organizations using this software must disclose their source code and have it publicly available, include this license, provide sufficient credit to the original authors of the project (IE: Team Pepsi), as well as provide a link to the original project.
  *
@@ -36,7 +36,7 @@ public class PacketDataOutput extends OutputStream implements DataOutput {
     }
 
     public void write(byte[] b, int off, int len) throws IOException {
-        for (int i = off; i < len; ++i) {
+        for(int i = off; i < len; ++i) {
             this.packet.writeByte(b[i]);
         }
 
@@ -67,7 +67,7 @@ public class PacketDataOutput extends OutputStream implements DataOutput {
     }
 
     public void writeFloat(float v) throws IOException {
-        this.packet.writeFloat((double) v);
+        this.packet.writeFloat((double)v);
     }
 
     public void writeDouble(double v) throws IOException {
@@ -82,7 +82,7 @@ public class PacketDataOutput extends OutputStream implements DataOutput {
         char[] var2 = s.toCharArray();
         int var3 = var2.length;
 
-        for (int var4 = 0; var4 < var3; ++var4) {
+        for(int var4 = 0; var4 < var3; ++var4) {
             char c = var2[var4];
             this.packet.writeUnsignedShort(c);
         }

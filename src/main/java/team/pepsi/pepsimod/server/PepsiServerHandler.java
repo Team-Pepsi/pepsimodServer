@@ -75,32 +75,14 @@ public class PepsiServerHandler extends ChannelInboundHandlerAdapter {
                                 ctx.writeAndFlush(send.buffer);
                                 return;
                             case 1:
-                                ClientHandler.info.put(ctx, new ClientInfo(pck, user, true));
-                                ServerCredentialsAccepted accepted = new ServerCredentialsAccepted();
-                                accepted.encode();
-                                ctx.writeAndFlush(accepted);
-                                System.out.println("Accepted credentials");
+                                user.password = pck.password;
+                                PepsiPacket.closeSession(ctx, "Success!", false);
                                 break;
                         }
                     } else {
                         PepsiPacket.closeSession(ctx, "Invalid HWID! Ask DaPorkchop_ for a reset!", true);
                         return;
                     }
-                }
-            } else if (id == 1) {
-                ClientChangePassword pck = new ClientChangePassword(packet.buffer);
-                pck.decode();
-                ClientInfo info = ClientHandler.info.getOrDefault(ctx, null);
-                if (info == null) {
-                    PepsiPacket.closeSession(ctx, "Invalid packets", true);
-                    return;
-                } else if (info.waitingForPassword) {
-                    info.user.password = pck.password;
-                    PepsiPacket.closeSession(ctx, "Success!", false);
-                    return;
-                } else {
-                    PepsiPacket.closeSession(ctx, "why are you asking for password reset xd", true);
-                    return;
                 }
             }
         } catch (IndexOutOfBoundsException e) {

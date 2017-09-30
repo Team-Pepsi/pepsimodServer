@@ -6,7 +6,7 @@
  * Permission is hereby granted to any persons and/or organizations using this software to copy, modify, merge, publish, and distribute it.
  * Said persons and/or organizations are not allowed to use the software or any derivatives of the work for commercial use or any other means to generate income, nor are they allowed to claim this software as their own.
  *
- * The persons and/or organizations are also disallowed from sub-licensing and/or trademarking this software without explicit permission from Team Pepsi. 
+ * The persons and/or organizations are also disallowed from sub-licensing and/or trademarking this software without explicit permission from Team Pepsi.
  *
  * Any persons and/or organizations using this software must disclose their source code and have it publicly available, include this license, provide sufficient credit to the original authors of the project (IE: Team Pepsi), as well as provide a link to the original project.
  *
@@ -25,13 +25,13 @@ import java.net.UnknownHostException;
 import java.util.Arrays;
 
 public class Packet {
-    public ByteBuf buffer;
     private short id;
+    public ByteBuf buffer;
     private PacketDataInput input;
     private PacketDataOutput output;
 
     public Packet(int id) {
-        buffer = Unpooled.buffer();
+        this.buffer = Unpooled.buffer();
         if (id >= 0 && id <= 255) {
             this.writeUnsignedByte(this.id = (short) id);
         } else {
@@ -50,7 +50,7 @@ public class Packet {
             this.id = this.readUnsignedByte();
         }
     }
-
+    
     public Packet(byte[] data) {
         this(Unpooled.copiedBuffer(data));
     }
