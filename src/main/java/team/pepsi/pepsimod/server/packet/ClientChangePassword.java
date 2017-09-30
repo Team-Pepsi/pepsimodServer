@@ -13,7 +13,29 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package team.pepsi.pepsimod.server.exception;
+package team.pepsi.pepsimod.server.packet;
 
-public class InvalidHWIDException extends IllegalStateException {
+import net.marfgamer.jraknet.Packet;
+import net.marfgamer.jraknet.RakNetPacket;
+
+public class ClientChangePassword extends RakNetPacket {
+    public String password;
+
+    public ClientChangePassword() {
+        super(1);
+    }
+
+    public ClientChangePassword(Packet packet) {
+        super(packet);
+    }
+
+    @Override
+    public void encode() {
+        writeString(password);
+    }
+
+    @Override
+    public void decode() {
+        password = readString();
+    }
 }

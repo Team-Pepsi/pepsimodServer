@@ -13,7 +13,41 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package team.pepsi.pepsimod.server.exception;
+package team.pepsi.pepsimod.server.packet;
 
-public class NoSuchUserException extends IllegalStateException {
+import net.marfgamer.jraknet.Packet;
+import net.marfgamer.jraknet.RakNetPacket;
+
+public class ClientRequest extends RakNetPacket {
+    public String username;
+    public String hwid;
+    public String version;
+    public int protocol;
+    public int nextRequest;
+
+    public ClientRequest() {
+        super(0);
+    }
+
+    public ClientRequest(Packet packet) {
+        super(packet);
+    }
+
+    @Override
+    public void encode() {
+        this.writeString(username);
+        this.writeString(hwid);
+        this.writeString(version);
+        this.writeInt(protocol);
+        this.writeInt(nextRequest);
+    }
+
+    @Override
+    public void decode() {
+        username = readString();
+        hwid = readString();
+        version = readString();
+        protocol = readInt();
+        nextRequest = readInt();
+    }
 }

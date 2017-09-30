@@ -13,7 +13,20 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package team.pepsi.pepsimod.server.exception;
+package team.pepsi.pepsimod.server.packet;
 
-public class WrongClassException extends IllegalStateException {
+import net.marfgamer.jraknet.protocol.Reliability;
+import net.marfgamer.jraknet.session.RakNetClientSession;
+import team.pepsi.pepsimod.server.Server;
+
+public class PepsiPacket {
+    public static void closeSession(RakNetClientSession session, String reason, boolean hard) {
+        System.out.println("Disconnecting client " + session.getAddress().toString().split(":")[0] + " for reason: " + reason);
+        ServerClose close = new ServerClose();
+        close.message = reason;
+        close.hard = hard;
+        close.encode();
+        session.sendMessage(Reliability.RELIABLE_ORDERED, close);
+        Server.rakNetServer.removeSession(session);
+    }
 }

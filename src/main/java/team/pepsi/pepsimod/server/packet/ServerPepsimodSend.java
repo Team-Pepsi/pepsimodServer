@@ -13,7 +13,42 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package team.pepsi.pepsimod.server.exception;
+package team.pepsi.pepsimod.server.packet;
 
-public class UpdateException extends IllegalStateException {
+import net.marfgamer.jraknet.Packet;
+import net.marfgamer.jraknet.RakNetPacket;
+
+public class ServerPepsimodSend extends RakNetPacket {
+    public byte[] classes;
+    public byte[] assets;
+
+    public ServerPepsimodSend() {
+        super(1);
+    }
+
+    public ServerPepsimodSend(Packet packet) {
+        super(packet);
+    }
+
+    @Override
+    public void encode() {
+        writeByteArray(classes);
+        writeByteArray(assets);
+    }
+
+    @Override
+    public void decode() {
+        classes = readByteArray();
+        assets = readByteArray();
+    }
+
+    public void writeByteArray(byte[] bytes) {
+        writeInt(bytes.length);
+        write(bytes);
+    }
+
+    public byte[] readByteArray() {
+        int len = readInt();
+        return read(len);
+    }
 }

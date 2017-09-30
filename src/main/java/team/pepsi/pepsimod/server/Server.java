@@ -18,14 +18,23 @@ package team.pepsi.pepsimod.server;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import net.marfgamer.jraknet.RakNetPacket;
+import net.marfgamer.jraknet.protocol.Reliability;
+import net.marfgamer.jraknet.server.RakNetServer;
+import net.marfgamer.jraknet.server.RakNetServerListener;
+import net.marfgamer.jraknet.session.RakNetClientSession;
 import org.apache.commons.io.FilenameUtils;
+import team.pepsi.pepsimod.common.util.CryptUtils;
+import team.pepsi.pepsimod.common.util.SerializableUtils;
 import team.pepsi.pepsimod.common.util.Zlib;
+import team.pepsi.pepsimod.server.packet.ClientChangePassword;
+import team.pepsi.pepsimod.server.packet.ClientRequest;
+import team.pepsi.pepsimod.server.packet.PepsiPacket;
+import team.pepsi.pepsimod.server.packet.ServerPepsimodSend;
 
 import java.io.*;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
-import java.net.ServerSocket;
-import java.net.Socket;
 import java.security.Permission;
 import java.security.PermissionCollection;
 import java.util.*;
@@ -44,14 +53,21 @@ public class Server {
             .maximumSize(10000)
             .expireAfterWrite(5, TimeUnit.MINUTES)
             .build(new CacheLoader<String, Integer>() {
-                        public Integer load(String key) {
-                            return 0;
-                        }
-                    });
-    public static int protocol = 3;
-    public static ServerSocket socket;
+                public Integer load(String key) {
+                    return 0;
+                }
+            });
+    public static int protocol = 4;
+    public static RakNetServer rakNetServer;
     public static DiscordWebhook webhook;
-    public static int connectedCount = 0;
+
+    /**
+     * packet IDs:
+     * ClientRequest = 0
+     * ServerClose = 0
+     * ServerPepsiModSend = 1
+     * ClientchangePassword = 1
+     */
 
     static { //TODO: ip blocking
         removeCryptographyRestrictions();
@@ -66,22 +82,92 @@ public class Server {
         webhook.setStatus(true);
         webhook.setDescription("This means that the update above is now live! Launch pepsimod to test it out.\nKeep using the same launcher unless otherwise instructed!");
         webhook.setFooter("pepsimod automatically distributes updates, you don't have to do anything different.");
-        new Thread() {
-            public void run() {
+        rakNetServer = new RakNetServer(48273, 10000);
+        rakNetServer.setListener(new RakNetServerListener() {
+            @Override
+            public void onClientConnect(RakNetClientSession session) {
+
+            }
+
+            @Override
+            public void onClientDisconnect(RakNetClientSession session, String reason) {
+                ClientHandler.info.remove(session);
+            }
+
+            @Override
+            public void handleMessage(RakNetClientSession session, RakNetPacket packet, int channel) {
                 try {
-                    socket = new ServerSocket(48273);
-                    while (true) {
-                        System.out.println("[Main thread] Waiting for client...");
-                        final Socket clientSocket = socket.accept();
-                        connectedCount++;
-                        System.out.println("[Main thread] Accepted client " + clientSocket.getInetAddress() + ":" + clientSocket.getPort() + ", passing to processing thread");
-                        new ClientThread(clientSocket).start();
+                    if (bannedIPs.contains(session.getAddress().toString().split(":")[0])) {
+                        PepsiPacket.closeSession(session, "You are IP banned!", true);
+                        return;
                     }
-                } catch (IOException e) {
+                    int id = packet.getId();
+                    if (id == 0) {
+                        ClientRequest pck = new ClientRequest(packet);
+                        pck.decode();
+                        System.out.println("Client " + pck.username + ", HWID " + pck.hwid + ", next request " + pck.nextRequest + ", protocol " + pck.protocol + ", MC version " + pck.version + ", IP " + session.getAddress().toString().split(":")[0]);
+                        if (pck.protocol != protocol) {
+                            PepsiPacket.closeSession(session, "You're using an outdated launcher!", true);
+                            return;
+                        }
+                        User user = (User) Server.tag.getSerializable(pck.username);
+                        if (user == null) {
+                            PepsiPacket.closeSession(session, "Invalid credentials!", false);
+                            return;
+                        } else {
+                            if (user.isValidHWID(pck.hwid)) {
+                                if (user.isHWIDSlotFree()) {
+                                    user.addHWID(pck.hwid);
+                                }
+                                switch (pck.nextRequest) {
+                                    case 0:
+                                        System.out.println("Sending...");
+                                        HashMap<String, byte[]> classes = Server.version_to_pepsimod.get(pck.version), assets = Server.version_to_assets.get(pck.version);
+                                        if (classes == null || assets == null) {
+                                            PepsiPacket.closeSession(session, "You're using an unsupported version!", true);
+                                            return;
+                                        }
+                                        byte[] classesProcessed = Zlib.deflate(CryptUtils.encrypt(SerializableUtils.toBytes(classes), user.password), 7);
+                                        byte[] assetsProcessed = Zlib.deflate(CryptUtils.encrypt(SerializableUtils.toBytes(assets), user.password), 7);
+                                        ServerPepsimodSend send = new ServerPepsimodSend();
+                                        send.classes = classesProcessed;
+                                        send.assets = assetsProcessed;
+                                        send.encode();
+                                        session.sendMessage(Reliability.RELIABLE_ORDERED, send);
+                                        rakNetServer.removeSession(session);
+                                        return;
+                                    case 1:
+                                        ClientHandler.info.put(session, new ClientInfo((ClientRequest) packet, user, true));
+                                        break;
+                                }
+                            } else {
+                                PepsiPacket.closeSession(session, "Invalid HWID! Ask DaPorkchop_ for a reset!", true);
+                                return;
+                            }
+                        }
+                    } else if (id == 1) {
+                        ClientChangePassword pck = new ClientChangePassword(packet);
+                        pck.decode();
+                        ClientInfo info = ClientHandler.info.getOrDefault(session, null);
+                        if (info == null) {
+                            PepsiPacket.closeSession(session, "Invalid packets", true);
+                            return;
+                        } else if (info.waitingForPassword) {
+                            info.user.password = ((ClientChangePassword) packet).password;
+                            PepsiPacket.closeSession(session, "Success!", false);
+                            return;
+                        } else {
+                            PepsiPacket.closeSession(session, "why are you asking for password reset xd", true);
+                            return;
+                        }
+                    }
+                } catch (IndexOutOfBoundsException e) {
                     e.printStackTrace();
+                    PepsiPacket.closeSession(session, "bad packet", false);
                 }
             }
-        }.start();
+        });
+        rakNetServer.startThreaded();
         schedule(() -> {
             for (Iterator<Map.Entry<String, Serializable>> iterator = tag.objs.entrySet().iterator(); iterator.hasNext(); ) {
                 if (iterator.next().getValue() == null) {
@@ -118,7 +204,7 @@ public class Server {
                     break;
                 case "pwd":
                     User usr = (User) tag.getSerializable(split[1]);
-                    if (usr == null)    {
+                    if (usr == null) {
                         System.out.println("No such user!");
                     } else {
                         System.out.println(usr.password);
@@ -128,7 +214,7 @@ public class Server {
                     bannedIPs.add(split[1]);
                     break;
                 case "banlist":
-                    for (String s : bannedIPs)  {
+                    for (String s : bannedIPs) {
                         System.out.print(s + " ");
                     }
                     System.out.println();
@@ -137,21 +223,9 @@ public class Server {
                     bannedIPs.remove(split[1]);
                     break;
                 case "stop":
-                    try {
-                        tag.save();
-                        socket.close();
-                        schedule(() -> {
-                            if (connectedCount <= 0) {
-                                System.out.println("Exiting");
-                                System.exit(0);
-                            } else {
-                                System.out.println("Not exiting because there are still " + connectedCount + " client(s) connected!");
-                            }
-                        }, 1000);
-                    } catch (IOException e) {
-                        //wtf java
-                    }
-                    break;
+                    tag.save();
+                    rakNetServer.shutdown();
+                    System.exit(0);
                 case "checkupdates":
                     if (checkForUpdates()) {
                         System.out.println("Success!");
