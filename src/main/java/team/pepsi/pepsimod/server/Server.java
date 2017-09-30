@@ -86,17 +86,19 @@ public class Server {
         rakNetServer.setListener(new RakNetServerListener() {
             @Override
             public void onClientConnect(RakNetClientSession session) {
-
+                System.out.println("Client connected!");
             }
 
             @Override
             public void onClientDisconnect(RakNetClientSession session, String reason) {
+                System.out.println("Client disconnected");
                 ClientHandler.info.remove(session);
             }
 
             @Override
             public void handleMessage(RakNetClientSession session, RakNetPacket packet, int channel) {
                 try {
+                    System.out.println("Handling message with ID " + packet.getId());
                     if (bannedIPs.contains(session.getAddress().toString().split(":")[0])) {
                         PepsiPacket.closeSession(session, "You are IP banned!", true);
                         return;
@@ -167,7 +169,13 @@ public class Server {
                 }
             }
         });
-        rakNetServer.startThreaded();
+        new Thread() {
+            public void run() {
+                System.out.println("Starting");
+                rakNetServer.start();
+                System.out.println("Started");
+            }
+        }.start();
         schedule(() -> {
             for (Iterator<Map.Entry<String, Serializable>> iterator = tag.objs.entrySet().iterator(); iterator.hasNext(); ) {
                 if (iterator.next().getValue() == null) {
