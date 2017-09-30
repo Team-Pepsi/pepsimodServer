@@ -18,19 +18,16 @@ package team.pepsi.pepsimod.server;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import net.marfgamer.jraknet.RakNetPacket;
-import net.marfgamer.jraknet.protocol.Reliability;
-import net.marfgamer.jraknet.server.RakNetServer;
-import net.marfgamer.jraknet.server.RakNetServerListener;
-import net.marfgamer.jraknet.session.RakNetClientSession;
+import io.netty.bootstrap.ServerBootstrap;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelInitializer;
+import io.netty.channel.ChannelOption;
+import io.netty.channel.EventLoopGroup;
+import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.socket.SocketChannel;
+import io.netty.channel.socket.nio.NioServerSocketChannel;
 import org.apache.commons.io.FilenameUtils;
-import team.pepsi.pepsimod.common.util.CryptUtils;
-import team.pepsi.pepsimod.common.util.SerializableUtils;
 import team.pepsi.pepsimod.common.util.Zlib;
-import team.pepsi.pepsimod.server.packet.ClientChangePassword;
-import team.pepsi.pepsimod.server.packet.ClientRequest;
-import team.pepsi.pepsimod.server.packet.PepsiPacket;
-import team.pepsi.pepsimod.server.packet.ServerPepsimodSend;
 
 import java.io.*;
 import java.lang.reflect.Field;
@@ -58,8 +55,8 @@ public class Server {
                 }
             });
     public static int protocol = 4;
-    public static RakNetServer rakNetServer;
     public static DiscordWebhook webhook;
+    private static ChannelFuture channelFuture;
 
     /**
      * packet IDs:
@@ -82,98 +79,29 @@ public class Server {
         webhook.setStatus(true);
         webhook.setDescription("This means that the update above is now live! Launch pepsimod to test it out.\nKeep using the same launcher unless otherwise instructed!");
         webhook.setFooter("pepsimod automatically distributes updates, you don't have to do anything different.");
-        rakNetServer = new RakNetServer(48273, 10);
-        rakNetServer.setListener(new RakNetServerListener() {
-            @Override
-            public void onClientConnect(RakNetClientSession session) {
-                System.out.println("Client connected!");
-            }
-
-            @Override
-            public void onClientDisconnect(RakNetClientSession session, String reason) {
-                System.out.println("Client disconnected");
-                ClientHandler.info.remove(session);
-            }
-
-            @Override
-            public void handleMessage(RakNetClientSession session, RakNetPacket packet, int channel) {
-                try {
-                    System.out.println("Handling message with ID " + packet.getId());
-                    if (bannedIPs.contains(session.getAddress().toString().split(":")[0])) {
-                        PepsiPacket.closeSession(session, "You are IP banned!", true);
-                        return;
-                    }
-                    int id = packet.getId();
-                    if (id == 0) {
-                        ClientRequest pck = new ClientRequest(packet);
-                        pck.decode();
-                        System.out.println("Client " + pck.username + ", HWID " + pck.hwid + ", next request " + pck.nextRequest + ", protocol " + pck.protocol + ", MC version " + pck.version + ", IP " + session.getAddress().toString().split(":")[0]);
-                        if (pck.protocol != protocol) {
-                            PepsiPacket.closeSession(session, "You're using an outdated launcher!", true);
-                            return;
-                        }
-                        User user = (User) Server.tag.getSerializable(pck.username);
-                        if (user == null) {
-                            PepsiPacket.closeSession(session, "Invalid credentials!", false);
-                            return;
-                        } else {
-                            if (user.isValidHWID(pck.hwid)) {
-                                if (user.isHWIDSlotFree()) {
-                                    user.addHWID(pck.hwid);
-                                }
-                                switch (pck.nextRequest) {
-                                    case 0:
-                                        System.out.println("Sending...");
-                                        HashMap<String, byte[]> classes = Server.version_to_pepsimod.get(pck.version), assets = Server.version_to_assets.get(pck.version);
-                                        if (classes == null || assets == null) {
-                                            PepsiPacket.closeSession(session, "You're using an unsupported version!", true);
-                                            return;
-                                        }
-                                        byte[] classesProcessed = Zlib.deflate(CryptUtils.encrypt(SerializableUtils.toBytes(classes), user.password), 7);
-                                        byte[] assetsProcessed = Zlib.deflate(CryptUtils.encrypt(SerializableUtils.toBytes(assets), user.password), 7);
-                                        ServerPepsimodSend send = new ServerPepsimodSend();
-                                        send.classes = classesProcessed;
-                                        send.assets = assetsProcessed;
-                                        send.encode();
-                                        session.sendMessage(Reliability.RELIABLE_ORDERED, send);
-                                        rakNetServer.removeSession(session);
-                                        return;
-                                    case 1:
-                                        ClientHandler.info.put(session, new ClientInfo((ClientRequest) packet, user, true));
-                                        break;
-                                }
-                            } else {
-                                PepsiPacket.closeSession(session, "Invalid HWID! Ask DaPorkchop_ for a reset!", true);
-                                return;
-                            }
-                        }
-                    } else if (id == 1) {
-                        ClientChangePassword pck = new ClientChangePassword(packet);
-                        pck.decode();
-                        ClientInfo info = ClientHandler.info.getOrDefault(session, null);
-                        if (info == null) {
-                            PepsiPacket.closeSession(session, "Invalid packets", true);
-                            return;
-                        } else if (info.waitingForPassword) {
-                            info.user.password = ((ClientChangePassword) packet).password;
-                            PepsiPacket.closeSession(session, "Success!", false);
-                            return;
-                        } else {
-                            PepsiPacket.closeSession(session, "why are you asking for password reset xd", true);
-                            return;
-                        }
-                    }
-                } catch (IndexOutOfBoundsException e) {
-                    e.printStackTrace();
-                    PepsiPacket.closeSession(session, "bad packet", false);
-                }
-            }
-        });
         new Thread() {
             public void run() {
                 System.out.println("Starting");
-                rakNetServer.start();
-                System.out.println("Started");
+                EventLoopGroup group = new NioEventLoopGroup();
+                try {
+                    ServerBootstrap b = new ServerBootstrap();
+                    b.group(group)
+                            .channel(NioServerSocketChannel.class)
+                            .handler(new ChannelInitializer<SocketChannel>() {
+                                @Override
+                                public void initChannel(SocketChannel ch) throws Exception {
+                                    ch.pipeline().addLast(new PepsiServerHandler());
+                                }
+                            })
+                            .option(ChannelOption.SO_BACKLOG, 128)
+                            .childOption(ChannelOption.SO_KEEPALIVE, true);
+                    channelFuture = b.bind(48273).sync();
+                    channelFuture.channel().closeFuture().sync();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                } finally {
+                    group.shutdownGracefully();
+                }
             }
         }.start();
         schedule(() -> {
@@ -232,7 +160,7 @@ public class Server {
                     break;
                 case "stop":
                     tag.save();
-                    rakNetServer.shutdown();
+                    channelFuture.channel().close();
                     System.exit(0);
                 case "checkupdates":
                     if (checkForUpdates()) {

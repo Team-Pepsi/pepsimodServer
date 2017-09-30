@@ -15,18 +15,16 @@
 
 package team.pepsi.pepsimod.server.packet;
 
-import net.marfgamer.jraknet.protocol.Reliability;
-import net.marfgamer.jraknet.session.RakNetClientSession;
-import team.pepsi.pepsimod.server.Server;
+import io.netty.channel.ChannelHandlerContext;
 
 public class PepsiPacket {
-    public static void closeSession(RakNetClientSession session, String reason, boolean hard) {
-        System.out.println("Disconnecting client " + session.getAddress().toString().split(":")[0] + " for reason: " + reason);
+    public static void closeSession(ChannelHandlerContext session, String reason, boolean hard) {
+        System.out.println("Disconnecting client " + session.channel().remoteAddress().toString().split(":")[0] + " for reason: " + reason);
         ServerClose close = new ServerClose();
         close.message = reason;
         close.hard = hard;
         close.encode();
-        session.sendMessage(Reliability.RELIABLE_ORDERED, close);
-        Server.rakNetServer.removeSession(session);
+        session.writeAndFlush(close.buffer);
+        session.close();
     }
 }

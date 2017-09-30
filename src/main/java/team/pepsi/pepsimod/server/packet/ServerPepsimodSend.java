@@ -15,10 +15,9 @@
 
 package team.pepsi.pepsimod.server.packet;
 
-import net.marfgamer.jraknet.Packet;
-import net.marfgamer.jraknet.RakNetPacket;
+import io.netty.buffer.ByteBuf;
 
-public class ServerPepsimodSend extends RakNetPacket {
+public class ServerPepsimodSend extends Packet {
     public byte[] classes;
     public byte[] assets;
 
@@ -26,7 +25,7 @@ public class ServerPepsimodSend extends RakNetPacket {
         super(1);
     }
 
-    public ServerPepsimodSend(Packet packet) {
+    public ServerPepsimodSend(ByteBuf packet) {
         super(packet);
     }
 

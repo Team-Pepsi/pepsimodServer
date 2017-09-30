@@ -15,10 +15,9 @@
 
 package team.pepsi.pepsimod.server.packet;
 
-import net.marfgamer.jraknet.Packet;
-import net.marfgamer.jraknet.RakNetPacket;
+import io.netty.buffer.ByteBuf;
 
-public class ClientRequest extends RakNetPacket {
+public class ClientRequest extends Packet {
     public String username;
     public String hwid;
     public String version;
@@ -29,7 +28,7 @@ public class ClientRequest extends RakNetPacket {
         super(0);
     }
 
-    public ClientRequest(Packet packet) {
+    public ClientRequest(ByteBuf packet) {
         super(packet);
     }
 

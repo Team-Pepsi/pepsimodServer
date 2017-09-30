@@ -15,17 +15,16 @@
 
 package team.pepsi.pepsimod.server.packet;
 
-import net.marfgamer.jraknet.Packet;
-import net.marfgamer.jraknet.RakNetPacket;
+import io.netty.buffer.ByteBuf;
 
-public class ClientChangePassword extends RakNetPacket {
+public class ClientChangePassword extends Packet {
     public String password;
 
     public ClientChangePassword() {
         super(1);
     }
 
-    public ClientChangePassword(Packet packet) {
+    public ClientChangePassword(ByteBuf packet) {
         super(packet);
     }
 

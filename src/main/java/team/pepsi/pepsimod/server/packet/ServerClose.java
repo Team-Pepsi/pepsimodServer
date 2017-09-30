@@ -15,10 +15,9 @@
 
 package team.pepsi.pepsimod.server.packet;
 
-import net.marfgamer.jraknet.Packet;
-import net.marfgamer.jraknet.RakNetPacket;
+import io.netty.buffer.ByteBuf;
 
-public class ServerClose extends RakNetPacket {
+public class ServerClose extends Packet {
     public String message;
     public boolean hard;
 
@@ -26,7 +25,7 @@ public class ServerClose extends RakNetPacket {
         super(0);
     }
 
-    public ServerClose(Packet packet) {
+    public ServerClose(ByteBuf packet) {
         super(packet);
     }
 

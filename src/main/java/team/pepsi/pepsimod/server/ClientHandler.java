@@ -15,10 +15,10 @@
 
 package team.pepsi.pepsimod.server;
 
-import net.marfgamer.jraknet.session.RakNetClientSession;
+import io.netty.channel.ChannelHandlerContext;
 
 import java.util.Hashtable;
 
 public class ClientHandler {
-    public static final Hashtable<RakNetClientSession, ClientInfo> info = new Hashtable<>();
+    public static final Hashtable<ChannelHandlerContext, ClientInfo> info = new Hashtable<>();
 }
