@@ -25,6 +25,6 @@ public class PepsiPacket {
         close.hard = hard;
         close.encode();
         session.writeAndFlush(close.buffer);
-        session.close();
+        //session.close();
     }
 }
