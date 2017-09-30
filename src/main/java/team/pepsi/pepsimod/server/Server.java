@@ -26,6 +26,8 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
+import io.netty.handler.codec.LengthFieldPrepender;
 import io.netty.handler.timeout.ReadTimeoutHandler;
 import org.apache.commons.io.FilenameUtils;
 import team.pepsi.pepsimod.common.util.Zlib;
@@ -91,6 +93,8 @@ public class Server {
                             .childHandler(new ChannelInitializer<SocketChannel>() {
                                 @Override
                                 public void initChannel(SocketChannel ch) throws Exception {
+                                    ch.pipeline().addLast("frameDecoder", new LengthFieldBasedFrameDecoder(Integer.MAX_VALUE, 0, 4, 0, 4));
+                                    ch.pipeline().addLast("frameEncoder", new LengthFieldPrepender(4));
                                     ch.pipeline().addLast(new ReadTimeoutHandler(30), new PepsiServerHandler());
                                 }
                             })
