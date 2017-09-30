@@ -40,7 +40,8 @@ public class Packet {
     }
 
     public Packet(ByteBuf buffer) {
-        this.buffer = buffer;
+        buffer.resetReaderIndex();
+        this.buffer = Unpooled.copiedBuffer(buffer);
         this.input = new PacketDataInput(this);
         this.output = new PacketDataOutput(this);
         if (this.remaining() < 1) {
