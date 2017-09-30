@@ -31,6 +31,7 @@ public class Packet {
     private PacketDataOutput output;
 
     public Packet(int id) {
+        buffer = Unpooled.buffer();
         if (id >= 0 && id <= 255) {
             this.writeUnsignedByte(this.id = (short) id);
         } else {
