@@ -66,7 +66,8 @@ public class Server {
      * ClientRequest = 0
      * ServerClose = 0
      * ServerPepsiModSend = 1
-     * ClientchangePassword = 1
+     * ServerCredentialsAccepted ) 2
+     * ClientChangePassword = 1
      */
 
     static { //TODO: ip blocking
