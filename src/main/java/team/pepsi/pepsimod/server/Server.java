@@ -82,7 +82,7 @@ public class Server {
         webhook.setStatus(true);
         webhook.setDescription("This means that the update above is now live! Launch pepsimod to test it out.\nKeep using the same launcher unless otherwise instructed!");
         webhook.setFooter("pepsimod automatically distributes updates, you don't have to do anything different.");
-        rakNetServer = new RakNetServer(48273, 10);
+        rakNetServer = new RakNetServer(48273, 10, 1024);
         rakNetServer.setListener(new RakNetServerListener() {
             @Override
             public void onClientConnect(RakNetClientSession session) {
