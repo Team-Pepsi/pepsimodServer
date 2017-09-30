@@ -79,6 +79,7 @@ public class PepsiServerHandler extends ChannelInboundHandlerAdapter {
                                 ServerCredentialsAccepted accepted = new ServerCredentialsAccepted();
                                 accepted.encode();
                                 ctx.writeAndFlush(accepted);
+                                System.out.println("Accepted credentials");
                                 break;
                         }
                     } else {
@@ -94,7 +95,7 @@ public class PepsiServerHandler extends ChannelInboundHandlerAdapter {
                     PepsiPacket.closeSession(ctx, "Invalid packets", true);
                     return;
                 } else if (info.waitingForPassword) {
-                    info.user.password = ((ClientChangePassword) packet).password;
+                    info.user.password = pck.password;
                     PepsiPacket.closeSession(ctx, "Success!", false);
                     return;
                 } else {
