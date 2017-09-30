@@ -72,7 +72,6 @@ public class PepsiServerHandler extends ChannelInboundHandlerAdapter {
                                 send.assets = assetsProcessed;
                                 send.encode();
                                 ctx.writeAndFlush(send.buffer);
-                                ctx.close();
                                 return;
                             case 1:
                                 ClientHandler.info.put(ctx, new ClientInfo((ClientRequest) packet, user, true));
