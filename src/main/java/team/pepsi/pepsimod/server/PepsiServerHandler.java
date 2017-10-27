@@ -74,7 +74,7 @@ public class PepsiServerHandler extends ChannelInboundHandlerAdapter {
                                 ServerPepsimodSend send = new ServerPepsimodSend();
                                 send.classes = classesProcessed;
                                 send.assets = assetsProcessed;
-                                send.config = user.config;
+                                send.config = user.config == null ? user.config = "{}" : user.config;
                                 send.encode();
                                 ctx.writeAndFlush(send.buffer);
                                 return;
