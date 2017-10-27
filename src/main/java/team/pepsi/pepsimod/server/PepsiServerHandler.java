@@ -38,16 +38,19 @@ public class PepsiServerHandler extends ChannelInboundHandlerAdapter {
         ByteBuf buf = (ByteBuf) msg;
         try {
             Packet packet = new Packet(buf);
-            System.out.println("Handling message with ID " + packet.getId());
+
             if (bannedIPs.contains(ctx.channel().remoteAddress().toString().split(":")[0])) {
                 PepsiPacket.closeSession(ctx, "You are IP banned!", true);
                 return;
             }
             int id = packet.getId();
+            System.out.println("Handling message with ID " + packet.getId());
             if (id == 0) {
                 ClientRequest pck = new ClientRequest(packet.buffer);
                 pck.decode();
-                System.out.println("Client " + pck.username + ", HWID " + pck.hwid + ", next request " + pck.nextRequest + ", protocol " + pck.protocol + ", MC version " + pck.version + ", IP " + ctx.channel().remoteAddress().toString().split(":")[0]);
+                if (pck.nextRequest != 2) {
+                    System.out.println("Client " + pck.username + ", HWID " + pck.hwid + ", next request " + pck.nextRequest + ", protocol " + pck.protocol + ", MC version " + pck.version + ", IP " + ctx.channel().remoteAddress().toString().split(":")[0]);
+                }
                 if (pck.protocol != protocol) {
                     PepsiPacket.closeSession(ctx, "You're using an outdated launcher!", true);
                     return;
