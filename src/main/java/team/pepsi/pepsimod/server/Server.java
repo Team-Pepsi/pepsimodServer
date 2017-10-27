@@ -142,7 +142,7 @@ public class Server {
                     tag.save();
                     break;
                 case "help":
-                    System.out.println("add remove resethwid save pwd ban unban banlist stop checkupdates forceload gethwids");
+                    System.out.println("add remove resethwid save pwd ban unban banlist stop checkupdates forceload gethwids addhwid config resetconfig");
                     break;
                 case "pwd":
                     User usr = (User) tag.getSerializable(split[1]);
@@ -190,6 +190,31 @@ public class Server {
                             }
                             System.out.println("HWID #" + i + ": " + s);
                         }
+                    }
+                    break;
+                case "addhwid":
+                    User user2 = (User) tag.getSerializable(split[1]);
+                    if (user2 == null) {
+                        System.out.println("No such user!");
+                    } else {
+                        user2.addHWIDSlots(user2.hwids.length + 1);
+                        System.out.println("Added 1 HWID slot to " + split[1]);
+                    }
+                    break;
+                case "config":
+                    User user3 = (User) tag.getSerializable(split[1]);
+                    if (user3 == null) {
+                        System.out.println("No such user!");
+                    } else {
+                        System.out.println(split[1] + "'s config: " + user3.config);
+                    }
+                    break;
+                case "resetconfig":
+                    User user4 = (User) tag.getSerializable(split[1]);
+                    if (user4 == null) {
+                        System.out.println("No such user!");
+                    } else {
+                        user4.config = "{}";
                     }
                     break;
                 default:
