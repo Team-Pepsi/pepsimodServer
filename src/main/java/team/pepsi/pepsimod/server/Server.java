@@ -57,7 +57,7 @@ public class Server {
                     return 0;
                 }
             });
-    public static int protocol = 4;
+    public static int protocol = 5;
     public static DiscordWebhook webhook;
     private static ChannelFuture channelFuture;
 
