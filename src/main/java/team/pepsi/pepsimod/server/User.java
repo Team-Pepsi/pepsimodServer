@@ -21,6 +21,7 @@ public class User implements Serializable {
     private static final long serialVersionUID = 380246685237890169L;
     public String username = null;
     public String password = null;
+    public String config = "{}";
     public String[] hwids = new String[]{null, null};
 
     public boolean isValidHWID(String hwid) {
@@ -60,5 +61,18 @@ public class User implements Serializable {
                 }
             }
         }
+    }
+
+    public void addHWIDSlots(int count) {
+        if (count <= hwids.length) {
+            return;
+        }
+
+        String[] newHwids = new String[count];
+        for (int i = 0; i < hwids.length; i++) {
+            newHwids[i] = hwids[i];
+        }
+
+        hwids = newHwids;
     }
 }

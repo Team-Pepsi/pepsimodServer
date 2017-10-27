@@ -22,7 +22,10 @@ import io.netty.handler.timeout.ReadTimeoutException;
 import team.pepsi.pepsimod.common.util.CryptUtils;
 import team.pepsi.pepsimod.common.util.SerializableUtils;
 import team.pepsi.pepsimod.common.util.Zlib;
-import team.pepsi.pepsimod.server.packet.*;
+import team.pepsi.pepsimod.server.packet.ClientRequest;
+import team.pepsi.pepsimod.server.packet.Packet;
+import team.pepsi.pepsimod.server.packet.PepsiPacket;
+import team.pepsi.pepsimod.server.packet.ServerPepsimodSend;
 
 import java.util.HashMap;
 
@@ -71,11 +74,16 @@ public class PepsiServerHandler extends ChannelInboundHandlerAdapter {
                                 ServerPepsimodSend send = new ServerPepsimodSend();
                                 send.classes = classesProcessed;
                                 send.assets = assetsProcessed;
+                                send.config = user.config;
                                 send.encode();
                                 ctx.writeAndFlush(send.buffer);
                                 return;
                             case 1:
                                 user.password = pck.password;
+                                PepsiPacket.closeSession(ctx, "Success!", false);
+                                break;
+                            case 2:
+                                user.config = pck.config;
                                 PepsiPacket.closeSession(ctx, "Success!", false);
                                 break;
                         }
